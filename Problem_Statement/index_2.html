@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Analysis - Executive Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.4;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .dashboard-container {
+            height: 100vh;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            max-width: 100vw;
+        }
+
+        /* Compact Header */
+        .executive-header {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            padding: 20px 30px;
+            position: relative;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title-section h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .title-section p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .exec-summary-compact {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+            font-size: 0.85rem;
+        }
+
+        /* Main Content Grid */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Key Metrics */
+        .metrics-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f1f5f9;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .metric-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 15px;
+        }
+
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 10px;
+        }
+
+        .metric-insight {
+            font-size: 0.75rem;
+            color: #64748b;
+            line-height: 1.3;
+        }
+
+        /* Center Panel - Charts */
+        .charts-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-header {
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 5px;
+        }
+
+        .chart-subtitle {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .chart-container {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .chart-insight {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: #475569;
+            line-height: 1.3;
+        }
+
+        /* Right Panel - Risk Segments & Model */
+        .insights-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .risk-segments {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .risk-card {
+            border-radius: 12px;
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .risk-high {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 2px solid #f87171;
+        }
+
+        .risk-medium {
+            background: linear-gradient(135deg, #fefbef 0%, #fef3c7 100%);
+            border: 2px solid #fbbf24;
+        }
+
+        .risk-low {
+            background: linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%);
+            border: 2px solid #34d399;
+        }
+
+        .risk-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .risk-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            margin-right: 12px;
+        }
+
+        .risk-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .risk-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .risk-actions {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.75rem;
+        }
+
+        .actions-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        .actions-list {
+            list-style: none;
+            font-size: 0.7rem;
+            color: #4b5563;
+        }
+
+        .actions-list li {
+            margin-bottom: 3px;
+            padding-left: 12px;
+            position: relative;
+        }
+
+        .actions-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            font-weight: 600;
+            color: #6366f1;
+        }
+
+        /* Model Performance Card */
+        .model-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f1f5f9;
+        }
+
+        .model-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: #0f172a;
+            text-align: center;
+        }
+
+        .architecture-visual {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .layer-box {
+            text-align: center;
+            padding: 8px 6px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.7rem;
+            flex: 1;
+            margin: 0 2px;
+        }
+
+        .layer-input { background: #8b5cf6; }
+        .layer-hidden1 { background: #7c3aed; }
+        .layer-hidden2 { background: #6d28d9; }
+        .layer-output { background: #5b21b6; }
+
+        .arrow {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin: 0 2px;
+        }
+
+        .performance-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .perf-stat {
+            text-align: center;
+        }
+
+        .perf-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #8b5cf6;
+        }
+
+        .perf-label {
+            font-size: 0.8rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        /* Footer */
+        .footer-cta {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+        }
+
+        .cta-text {
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .cta-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .cta-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .cta-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .cta-primary {
+            background: white;
+            color: #6366f1;
+        }
+
+        .cta-primary:hover {
+            background: #f8fafc;
+        }
+
+        /* Purple color variations */
+        .purple-light { color: #a855f7; }
+        .purple-medium { color: #9333ea; }
+        .purple-dark { color: #7c3aed; }
+        .purple-darker { color: #6d28d9; }
+
+        /* Responsive adjustments */
+        @media (max-width: 1400px) {
+            .main-content {
+                grid-template-columns: 300px 1fr 300px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 250px 1fr 250px;
+            }
+            
+            .metric-value, .perf-value {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Compact Header -->
+        <div class="executive-header">
+            <div class="header-content">
+                <div class="title-section">
+                    <h1>Customer Churn Analysis</h1>
+                    <p>Advanced Neural Network Insights & Strategic Recommendations</p>
+                </div>
+                <div class="exec-summary-compact">
+                    <strong>Key Finding:</strong> ANN model reveals 20.4% churn rate with Germany at critical 32.4%. 
+                    Model achieves 86.6% accuracy enabling $2.5M annual savings through targeted retention.
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Panel - Key Metrics -->
+            <div class="metrics-panel">
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #a855f7, #9333ea);">📈</div>
+                    <div class="metric-value purple-medium">20.4%</div>
+                    <div class="metric-label">Overall Churn Rate</div>
+                    <div class="metric-insight">2,038 of 10,000 customers churned. Above industry benchmark of 15-18%.</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #7c3aed, #6d28d9);">🇩🇪</div>
+                    <div class="metric-value purple-dark">32.4%</div>
+                    <div class="metric-label">Germany Churn Rate</div>
+                    <div class="metric-insight">2x higher than France/Spain. Requires immediate market intervention.</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">🧠</div>
+                    <div class="metric-value purple-medium">86.6%</div>
+                    <div class="metric-label">ANN Accuracy</div>
+                    <div class="metric-insight">Neural network with 2,945 parameters ready for production deployment.</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-icon" style="background: linear-gradient(135deg, #9333ea, #8b5cf6);">👥</div>
+                    <div class="metric-value purple-light">45%</div>
+                    <div class="metric-label">Age 50-60 Churn</div>
+                    <div class="metric-insight">Highest-value demographic at greatest risk. Critical for retention focus.</div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Charts -->
+            <div class="charts-panel">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Geographic Risk Profile</h3>
+                        <p class="chart-subtitle">Germany emerges as highest-risk market</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="geographyChart"></canvas>
+                    </div>
+                    <div class="chart-insight">
+                        <strong>Action:</strong> Deploy German market specialists and competitive analysis team immediately.
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Age-Based Vulnerability</h3>
+                        <p class="chart-subtitle">Middle-aged customers at highest risk</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="ageChart"></canvas>
+                    </div>
+                    <div class="chart-insight">
+                        <strong>Strategy:</strong> Peak earning years (40-60) need premium retention programs.
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Product Portfolio Impact</h3>
+                        <p class="chart-subtitle">Sweet spot at 2 products</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="productChart"></canvas>
+                    </div>
+                    <div class="chart-insight">
+                        <strong>Optimize:</strong> Cross-sell single-product customers; review 4+ product over-servicing.
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Model Performance</h3>
+                        <p class="chart-subtitle">Training convergence analysis</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                    <div class="chart-insight">
+                        <strong>Reliability:</strong> Minimal overfitting detected. Model ready for production.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Risk Segments & Model -->
+            <div class="insights-panel">
+                <div class="risk-segments">
+                    <div class="risk-card risk-high">
+                        <div class="risk-header">
+                            <div class="risk-icon" style="background: #ef4444;">⚠️</div>
+                            <div class="risk-title">HIGH RISK</div>
+                        </div>
+                        <div class="risk-stats">
+                            <div class="stat-item">
+                                <div class="stat-value" style="color: #dc2626;">20%</div>
+                                <div class="stat-label">customers</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" style="color: #dc2626;">45%+</div>
+                                <div class="stat-label">churn risk</div>
+                            </div>
+                        </div>
+                        <div class="risk-actions">
+                            <div class="actions-title">Immediate Actions</div>
+                            <ul class="actions-list">
+                                <li>Deploy relationship managers</li>
+                                <li>Premium service upgrades</li>
+                                <li>48-hour outreach program</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="risk-card risk-medium">
+                        <div class="risk-header">
+                            <div class="risk-icon" style="background: #f59e0b;">📊</div>
+                            <div class="risk-title">MEDIUM RISK</div>
+                        </div>
+                        <div class="risk-stats">
+                            <div class="stat-item">
+                                <div class="stat-value" style="color: #d97706;">60%</div>
+                                <div class="stat-label">customers</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" style="color: #d97706;">15-45%</div>
+                                <div class="stat-label">churn risk</div>
+                            </div>
+                        </div>
+                        <div class="risk-actions">
+                            <div class="actions-title">Engagement Strategy</div>
+                            <ul class="actions-list">
+                                <li>Personalized campaigns</li>
+                                <li>Value recommendations</li>
+                                <li>Satisfaction surveys</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="risk-card risk-low">
+                        <div class="risk-header">
+                            <div class="risk-icon" style="background: #10b981;">✅</div>
+                            <div class="risk-title">LOW RISK</div>
+                        </div>
+                        <div class="risk-stats">
+                            <div class="stat-item">
+                                <div class="stat-value" style="color: #059669;">20%</div>
+                                <div class="stat-label">customers</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" style="color: #059669;"><15%</div>
+                                <div class="stat-label">churn risk</div>
+                            </div>
+                        </div>
+                        <div class="risk-actions">
+                            <div class="actions-title">Growth Focus</div>
+                            <ul class="actions-list">
+                                <li>Upselling opportunities</li>
+                                <li>Brand ambassadors</li>
+                                <li>Wealth management</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-card">
+                    <h3 class="model-title">🧠 Neural Network Architecture</h3>
+                    <div class="architecture-visual">
+                        <div class="layer-box layer-input">Input<br>12 feat.</div>
+                        <div class="arrow">→</div>
+                        <div class="layer-box layer-hidden1">Hidden<br>64 neu.</div>
+                        <div class="arrow">→</div>
+                        <div class="layer-box layer-hidden2">Hidden<br>32 neu.</div>
+                        <div class="arrow">→</div>
+                        <div class="layer-box layer-output">Output<br>Churn</div>
+                    </div>
+                    <div class="performance-stats">
+                        <div class="perf-stat">
+                            <div class="perf-value">86.6%</div>
+                            <div class="perf-label">Training</div>
+                        </div>
+                        <div class="perf-stat">
+                            <div class="perf-value">86.2%</div>
+                            <div class="perf-label">Validation</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; font-size: 0.75rem; color: #6b7280;">
+                        <strong>2,945 parameters</strong> • Production ready
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer CTA -->
+        <div class="footer-cta">
+            <div class="cta-text">Immediate implementation can reduce churn by 25-30% and protect $2.5M annual revenue</div>
+            <div class="cta-actions">
+                <a href="#" class="cta-button cta-primary">Deploy Model</a>
+                <a href="#" class="cta-button">Executive Review</a>
+                <a href="#" class="cta-button">Technical Report</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart configuration
+        Chart.defaults.font.family = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
+        Chart.defaults.color = '#374151';
+        Chart.defaults.font.size = 10;
+
+        // Purple color palette with varying shades
+        const purpleColors = {
+            light: '#c084fc',
+            medium: '#a855f7',
+            dark: '#9333ea',
+            darker: '#7c3aed',
+            darkest: '#6d28d9'
+        };
+
+        // Geography Chart - Purple gradient based on values
+        const geographyCtx = document.getElementById('geographyChart').getContext('2d');
+        new Chart(geographyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Germany', 'Spain', 'France'],
+                datasets: [{
+                    label: 'Churn Rate (%)',
+                    data: [32.4, 16.8, 16.2],
+                    backgroundColor: [purpleColors.darkest, purpleColors.medium, purpleColors.light],
+                    borderRadius: 6,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(context) {
+                                return `Churn Rate: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 40,
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            callback: function(value) { return value + '%'; },
+                            font: { size: 9 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 9, weight: 600 } }
+                    }
+                }
+            }
+        });
+
+        // Age Chart - Purple shades for churn intensity
+        const ageCtx = document.getElementById('ageChart').getContext('2d');
+        new Chart(ageCtx, {
+            type: 'bar',
+            data: {
+                labels: ['20-30', '30-40', '40-50', '50-60', '60+'],
+                datasets: [{
+                    label: 'Retained',
+                    data: [85, 78, 65, 55, 62],
+                    backgroundColor: purpleColors.light,
+                    borderRadius: { topLeft: 4, topRight: 4 }
+                }, {
+                    label: 'Churned',
+                    data: [15, 22, 35, 45, 38],
+                    backgroundColor: [purpleColors.medium, purpleColors.medium, purpleColors.dark, purpleColors.darkest, purpleColors.dark],
+                    borderRadius: { bottomLeft: 4, bottomRight: 4 }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { stacked: true, grid: { display: false }, ticks: { font: { size: 9 } } },
+                    y: { 
+                        stacked: true, 
+                        grid: { color: '#f1f5f9' },
+                        ticks: { 
+                            callback: function(value) { return value + '%'; },
+                            font: { size: 9 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { usePointStyle: true, padding: 15, font: { size: 9 } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Product Chart - Purple intensity based on churn rate
+        const productCtx = document.getElementById('productChart').getContext('2d');
+        new Chart(productCtx, {
+            type: 'line',
+            data: {
+                labels: ['1 Product', '2 Products', '3 Products', '4+ Products'],
+                datasets: [{
+                    label: 'Churn Rate (%)',
+                    data: [27.7, 7.6, 82.7, 100],
+                    borderColor: purpleColors.dark,
+                    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                    tension: 0.4,
+                    pointRadius: 3,
+                    fill: true,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 80,
+                        max: 90,
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            callback: function(value) { return value + '%'; },
+                            font: { size: 9 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 9 } }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { usePointStyle: true, padding: 10, font: { size: 9 } }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Add hover effects
+        document.querySelectorAll('.metric-card, .chart-card, .risk-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-2px) scale(1.02)';
+                card.style.transition = 'all 0.3s ease';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+
+        // CTA button interactions
+        document.querySelectorAll('.cta-button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                button.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    button.style.transform = 'scale(1)';
+                }, 150);
+                console.log('CTA clicked:', button.textContent);
+            });
+        });
+
+        // Animate metrics on load
+        setTimeout(() => {
+            document.querySelectorAll('.metric-value').forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'scale(0.5)';
+                el.style.transition = 'all 0.6s ease';
+                
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'scale(1)';
+                }, index * 200);
+            });
+        }, 500);
+
+        // Add subtle pulse animation to high-risk indicators
+        setInterval(() => {
+            const highRiskElements = document.querySelectorAll('.risk-high .stat-value');
+            highRiskElements.forEach(el => {
+                el.style.animation = 'pulse 2s ease-in-out';
+                setTimeout(() => {
+                    el.style.animation = '';
+                }, 2000);
+            });
+        }, 5000);
+
+        // Add CSS for pulse animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.05); opacity: 0.8; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Add chart animation on load
+        setTimeout(() => {
+            const charts = [geographyCtx, ageCtx, productCtx, performanceCtx];
+            charts.forEach((ctx, index) => {
+                setTimeout(() => {
+                    ctx.canvas.parentElement.style.opacity = '0';
+                    ctx.canvas.parentElement.style.transform = 'translateY(20px)';
+                    ctx.canvas.parentElement.style.transition = 'all 0.8s ease';
+                    
+                    setTimeout(() => {
+                        ctx.canvas.parentElement.style.opacity = '1';
+                        ctx.canvas.parentElement.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 300);
+            });
+        }, 1000);
+
+        // Responsive adjustments
+        function adjustForScreenSize() {
+            const width = window.innerWidth;
+            const container = document.querySelector('.main-content');
+            
+            if (width < 1200) {
+                container.style.gridTemplateColumns = '250px 1fr 250px';
+                container.style.gap = '15px';
+            } else if (width < 1400) {
+                container.style.gridTemplateColumns = '280px 1fr 280px';
+                container.style.gap = '18px';
+            } else {
+                container.style.gridTemplateColumns = '1fr 2fr 1fr';
+                container.style.gap = '20px';
+            }
+        }
+
+        // Initial adjustment and listener
+        adjustForScreenSize();
+        window.addEventListener('resize', adjustForScreenSize);
+
+        // Add tooltip functionality for insights
+        document.querySelectorAll('.metric-card, .chart-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                const insight = card.querySelector('.metric-insight, .chart-insight');
+                if (insight) {
+                    insight.style.backgroundColor = '#e0e7ff';
+                    insight.style.transform = 'scale(1.02)';
+                    insight.style.transition = 'all 0.2s ease';
+                }
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                const insight = card.querySelector('.metric-insight, .chart-insight');
+                if (insight) {
+                    insight.style.backgroundColor = '#f8fafc';
+                    insight.style.transform = 'scale(1)';
+                }
+            });
+        });
+
+        // Performance monitoring
+        console.log('Dashboard loaded successfully');
+        console.log('Charts initialized:', {
+            geography: !!geographyCtx,
+            age: !!ageCtx,
+            product: !!productCtx,
+            performance: !!performanceCtx
+        });
+    </script>
+</body>
+</html>,
+                    pointRadius: 6,
+                    pointBackgroundColor: [purpleColors.dark, purpleColors.light, purpleColors.darker, purpleColors.darkest],
+                    pointBorderColor: 'white',
+                    pointBorderWidth: 2,
+                    fill: true,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: '#f1f5f9' },
+                        ticks: {
+                            callback: function(value) { return value + '%'; },
+                            font: { size: 9 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 9 } }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        callbacks: {
+                            label: function(context) {
+                                return `Churn Rate: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Performance Chart - Purple gradient
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(performanceCtx, {
+            type: 'line',
+            data: {
+                labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20],
+                datasets: [{
+                    label: 'Training',
+                    data: [82.98, 85.56, 85.59, 85.90, 86.01, 86.09, 86.18, 86.51, 86.50, 86.55, 87.06, 87.04],
+                    borderColor: purpleColors.dark,
+                    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                    tension: 0.4,
+                    pointRadius: 3,
+                    fill: true,
+                    borderWidth: 2
+                }, {
+                    label: 'Validation',
+                    data: [85.30, 85.75, 86.60, 85.85, 85.65, 85.95, 86.55, 85.45, 86.25, 85.90, 85.45, 86.20],
+                    borderColor: purpleColors.medium,
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                    tension: 0.4

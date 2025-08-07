@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Arial', sans-serif;
+        }
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body class="p-8">
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">Customer Churn Analysis Dashboard</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for chart in charts %}
+                <div class="chart-container">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">{{ chart.title }}</h2>
+                    <div id="{{ chart.id }}"></div>
+                    <script>
+                        var plotData = {{ chart.plot | safe }};
+                        Plotly.newPlot("{{ chart.id }}", plotData.data, plotData.layout);
+                    </script>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
